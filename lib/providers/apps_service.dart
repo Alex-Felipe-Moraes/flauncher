@@ -299,6 +299,60 @@ class AppsService extends ChangeNotifier
     }
   }
 
+  Future<void> replaceCategoryApplications(
+    Category category,
+    List<App> applications,
+  ) async {
+    final categoryFound = _categoriesById[category.id];
+    if (categoryFound == null) {
+      throw StateError('Category ${category.id} is no longer available.');
+    }
+    if (applications.length > Category.maxHomeApplications) {
+      throw ArgumentError.value(
+        applications.length,
+        'applications',
+        'A carousel can contain at most ${Category.maxHomeApplications} apps.',
+      );
+    }
+
+    final packageNames = <String>{};
+    for (final application in applications) {
+      if (application.hidden ||
+          !_applications.containsKey(application.packageName)) {
+        throw ArgumentError.value(
+          application.packageName,
+          'applications',
+          'Selected apps must be installed and visible.',
+        );
+      }
+      if (!packageNames.add(application.packageName)) {
+        throw ArgumentError.value(
+          application.packageName,
+          'applications',
+          'An app cannot appear more than once in a carousel.',
+        );
+      }
+    }
+
+    await _database.replaceCategoryApplications(
+      categoryFound.id,
+      applications.map((application) => application.packageName).toList(),
+    );
+
+    for (final application in categoryFound.applications) {
+      application.categoryOrders.remove(categoryFound.id);
+    }
+    categoryFound.applications
+      ..clear()
+      ..addAll(applications);
+    categoryFound.sort = CategorySort.manual;
+    for (var index = 0; index < applications.length; index++) {
+      applications[index].categoryOrders[categoryFound.id] = index;
+    }
+
+    notifyListeners();
+  }
+
   Future<void> saveApplicationOrderInCategory(Category category) async {
     if (!_categoriesById.containsKey(category.id)) {
       return;

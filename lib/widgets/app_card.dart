@@ -40,6 +40,7 @@ class AppCard extends StatefulWidget
   final bool autofocus;
   final void Function(AxisDirection) onMove;
   final VoidCallback onMoveEnd;
+  final ValueChanged<App>? onFocused;
 
   const AppCard({
     super.key,
@@ -48,6 +49,7 @@ class AppCard extends StatefulWidget
     required this.autofocus,
     required this.onMove,
     required this.onMoveEnd,
+    this.onFocused,
   });
 
   @override
@@ -63,7 +65,7 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
     lowerBound: 0,
     upperBound: 255,
     duration: const Duration(
-      milliseconds: 800,
+      seconds: 1,
     ),
   );
 
@@ -93,7 +95,7 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
         return AspectRatio(
           aspectRatio: 16 / 9,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
+            duration: const Duration(milliseconds: 800),
             curve: Curves.easeInOut,
             transformAlignment: Alignment.center,
             transform: _scaleTransform(context),
@@ -112,6 +114,9 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
                     onTap: () => _onPressed(context, LogicalKeyboardKey.enter),
                     onLongPress: () => _onLongPress(context, LogicalKeyboardKey.enter),
                     onFocusChange: (focused) {
+                      if (focused) {
+                        widget.onFocused?.call(widget.application);
+                      }
                       Scrollable.ensureVisible(
                         context,
                         // This specific alignment value is not only
@@ -140,7 +145,9 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
                     selector: (_, settingsService) => settingsService.appHighlightAnimationEnabled && shouldHighlight,
                     builder: (context, highlight, _) {
                       if (highlight) {
-                        _animation.repeat(reverse: true);
+                        if (!_animation.isAnimating) {
+                          _animation.repeat(reverse: true);
+                        }
                         return AnimatedBuilder(
                           animation: _animation,
                           builder: (context, child) => IgnorePointer(

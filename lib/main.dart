@@ -25,6 +25,7 @@ import 'package:flauncher/providers/launcher_state.dart';
 import 'package:flauncher/providers/network_service.dart';
 import 'package:flauncher/providers/settings_service.dart';
 import 'package:flauncher/providers/wallpaper_service.dart';
+import 'package:flauncher/providers/wikimedia_featured_image_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -54,6 +55,7 @@ Future<void> main() async {
               return WallpaperService(fLauncherChannel, settingsService);
             }
         ),
+        ChangeNotifierProvider(create: (_) => WikimediaFeaturedImageService()),
       ],
       child: FLauncherApp()
     )

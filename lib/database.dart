@@ -171,6 +171,28 @@ class FLauncherDatabase extends _$FLauncherDatabase
   Future<void> replaceAppsCategories(List<AppsCategoriesCompanion> value) =>
       batch((batch) => batch.replaceAll(appsCategories, value));
 
+  Future<void> replaceCategoryApplications(
+    int categoryId,
+    List<String> packageNames,
+  ) =>
+      transaction(() async {
+        await updateCategory(
+          categoryId,
+          const CategoriesCompanion(sort: Value(CategorySort.manual)),
+        );
+        await (delete(appsCategories)
+              ..where((tbl) => tbl.categoryId.equals(categoryId)))
+            .go();
+        await insertAppsCategories([
+          for (var index = 0; index < packageNames.length; index++)
+            AppsCategoriesCompanion.insert(
+              categoryId: categoryId,
+              appPackageName: packageNames[index],
+              order: index,
+            ),
+        ]);
+      });
+
   Future<int> insertSpacer(Insertable<LauncherSpacer> spacer) => into(launcherSpacers).insert(spacer);
 
   Future<int> deleteSpacer(int spacerId) => (delete(launcherSpacers)..where(
